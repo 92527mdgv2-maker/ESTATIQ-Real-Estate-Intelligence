@@ -119,6 +119,23 @@ with tabs[0]:
         with cols[1]: metric('SELECTED STATE',state,'Current market filter')
         with cols[2]: metric('SELECTED CITIES',str(len(selected)),'Compare up to multiple markets')
         with cols[3]: metric('AVG. HOME VALUE',f'${mean_value:,.0f}' if pd.notna(mean_value) else 'N/A',f'Monthly change: {month_change:+.2f}%' if month_change is not None else 'No monthly comparison')
+
+        if not filtered.empty:
+            momentum = filtered.groupby('RegionName', as_index=False)[[latest, previous, prior_year]].mean().dropna(subset=[latest])
+            momentum['MoM (%)'] = (momentum[latest] / momentum[previous] - 1) * 100
+            momentum['YoY (%)'] = (momentum[latest] / momentum[prior_year] - 1) * 100
+            momentum = momentum.sort_values('YoY (%)', ascending=False)
+            best_city = momentum.iloc[0]
+            top_growth = best_city['YoY (%)']
+            with st.container():
+                m1, m2, m3 = st.columns(3)
+                with m1:
+                    st.metric('12M MOMENTUM', f'{top_growth:+.2f}% ', f'{best_city["RegionName"]} leads selected cities')
+                with m2:
+                    st.metric('SELECTED CITY AVG MoM', f'{momentum["MoM (%)"].mean():+.2f}%', 'Average monthly change across selected markets')
+                with m3:
+                    st.metric('HIGHEST VALUE CITY', best_city['RegionName'], f'${best_city[latest]:,.0f}')
+                st.dataframe(momentum[['RegionName', latest, 'MoM (%)', 'YoY (%)']].rename(columns={latest: 'Latest Value ($)'}).sort_values('YoY (%)', ascending=False).head(10), hide_index=True, use_container_width=True)
         st.write('')
         left,right=st.columns([1.45,1])
         with left:
@@ -211,8 +228,9 @@ with tabs[3]:
             comp=filtered.groupby('RegionName',as_index=False)[[latest,prior_year]].mean().dropna(subset=[latest])
             comp['Annual change (%)']=(comp[latest]/comp[prior_year]-1)*100
             comp=comp.rename(columns={latest:'Latest home value ($)'})
-            st.dataframe(comp,hide_index=True,use_container_width=True)
-            fig=px.bar(comp.sort_values('Latest home value ($)',ascending=False),x='RegionName',y='Latest home value ($)',color='Latest home value ($)',color_continuous_scale=['#1a578c','#3ca8ff'])
+            comp = comp.sort_values('Annual change (%)', ascending=False)
+            st.dataframe(comp[['RegionName','Latest home value ($)','Annual change (%)']],hide_index=True,use_container_width=True)
+            fig=px.bar(comp.sort_values('Latest home value ($)',ascending=False),x='RegionName',y='Latest home value ($)',color='Annual change (%)',color_continuous_scale='Blues')
             st.plotly_chart(style(fig,480),use_container_width=True)
             st.download_button('Download comparison',comp.to_csv(index=False),'estatiq_city_comparison.csv','text/csv')
         else: st.info('Select cities in Market filters.')

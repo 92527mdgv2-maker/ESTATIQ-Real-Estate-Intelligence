@@ -6,7 +6,8 @@ from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-
+import lightgbm as lgb
+import xgboost as xgb
 ROOT = Path(__file__).resolve().parent
 DATA = ROOT / 'data'
 INPUT = DATA / 'zillow_cleaned.csv'
@@ -50,6 +51,38 @@ def evaluate(data, test_start):
         'Linear Regression': LinearRegression(),
         'Random Forest': RandomForestRegressor(n_estimators=50, max_depth=12, random_state=42, n_jobs=-1),
     }
+
+    # These are intentionally conservative settings. The Zillow data here is a very smooth,
+    # near-linear monthly trend, so deep/tree-heavy boosters tend to overfit the short lag features.
+    if xgb is not None:
+        models['XGBoost'] = xgb.XGBRegressor(
+            objective='reg:squarederror',
+            n_estimators=500,
+            learning_rate=0.03,
+            max_depth=4,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            reg_lambda=3.0,
+            min_child_weight=3,
+            random_state=42,
+            n_jobs=-1,
+        )
+    if lgb is not None:
+        models['LightGBM'] = lgb.LGBMRegressor(
+            objective='regression',
+            n_estimators=500,
+            learning_rate=0.03,
+            max_depth=6,
+            num_leaves=16,
+            subsample=0.9,
+            colsample_bytree=0.9,
+            reg_alpha=0.1,
+            reg_lambda=1.0,
+            min_child_samples=20,
+            random_state=42,
+            n_jobs=-1,
+            verbosity=-1,
+        )
     metrics, predictions = [], []
     for name, model in models.items():
         if model is None:
