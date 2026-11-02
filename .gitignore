@@ -182,3 +182,4 @@ cython_debug/
 data/zillow_city.csv
 data/zillow_cleaned.csv
 data/model_predictions.csv
+.DS_Store
