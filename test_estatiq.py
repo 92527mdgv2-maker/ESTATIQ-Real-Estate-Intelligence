@@ -63,6 +63,12 @@ class TestESTATIQ(unittest.TestCase):
         )
         self.assertFalse(predictions.empty)
 
+    def test_xgboost_and_lightgbm_models_exist(self):
+        results = pd.read_csv(DATA_DIR / "model_results.csv")
+        model_names = results["Model"].astype(str).str.lower()
+        self.assertTrue(model_names.str.contains("xgboost").any())
+        self.assertTrue(model_names.str.contains("lightgbm").any())
+
 
 if __name__ == "__main__":
     unittest.main()
