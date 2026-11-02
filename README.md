@@ -459,3 +459,11 @@ The application demonstrates the integration of:
 ESTATIQ is an independent academic project and is not affiliated with or endorsed by Zillow.
 
 The platform is intended for education and research, not professional financial or investment advice.
+
+## Professor Setup & Reproduction Guide
+
+To install, reproduce, test, and run ESTATIQ from GitHub, please follow the complete step-by-step instructions:
+
+**[View the ESTATIQ Reproduction Guide](REPRODUCE_ESTATIQ.md)**
+
+The guide includes Python installation, Zillow dataset preparation, machine learning evaluation, automated testing, and dashboard startup instructions.
